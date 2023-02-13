@@ -6,6 +6,15 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
 import { RemovalPolicy } from "aws-cdk-lib";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
+import {
+  scanJSONRequestMapping,
+  scanJSONResponseMapping,
+  postJSONRequestMapping,
+  postJSONResponseMapping,
+  getItemJSONResponseMapping,
+  getItemJSONRequestMapping,
+  updateJSONRequestMapping,
+} from "./windfarm-mapping-templates";
 
 export class ServerlessWindPortfolioStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -53,40 +62,25 @@ export class ServerlessWindPortfolioStack extends cdk.Stack {
     });
 
     const farms = api.root.addResource("farms");
+    const farm = farms.addResource("{id}");
 
     const putIntegration = new apigateway.AwsIntegration({
       service: "dynamodb",
       action: "PutItem",
       options: {
         credentialsRole: credentialsRole,
+        requestTemplates: {
+          "application/json": postJSONRequestMapping(table.tableName),
+        },
         passthroughBehavior: apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
         integrationResponses: [
           {
-            selectionPattern: "2\\d{2}",
             statusCode: "200",
             responseTemplates: {
-              "application/json": `{
-                "id": "$context.requestId"
-              }`,
+              "application/json": postJSONResponseMapping(),
             },
           },
         ],
-        requestTemplates: {
-          "application/json": `{
-              "Item": {
-                "id": {
-                  "S": "$context.requestId"
-                },
-                "name": {
-                  "S": "$input.path('$.name')"
-                },
-                "number_of_turbines": {
-                  "S": "$input.path('$.number_of_turbines')"
-                }
-              },
-              "TableName": "${table.tableName}"
-            }`,
-        },
       },
     });
 
@@ -95,12 +89,18 @@ export class ServerlessWindPortfolioStack extends cdk.Stack {
       action: "Scan",
       options: {
         credentialsRole: credentialsRole,
-        integrationResponses: [{ statusCode: "200" }],
         requestTemplates: {
-          "application/json": `{
-              "TableName": "${table.tableName}"
-          }`,
+          "application/json": scanJSONRequestMapping(table.tableName),
         },
+        passthroughBehavior: apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseTemplates: {
+              "application/json": scanJSONResponseMapping(),
+            },
+          },
+        ],
       },
     });
 
@@ -109,17 +109,18 @@ export class ServerlessWindPortfolioStack extends cdk.Stack {
       action: "GetItem",
       options: {
         credentialsRole: credentialsRole,
-        integrationResponses: [{ statusCode: "200" }],
         requestTemplates: {
-          "application/json": `{
-              "Key": {
-                "id": {
-                  "S": "$method.request.path.id"
-                }
-              },
-              "TableName": "${table.tableName}"
-            }`,
+          "application/json": getItemJSONRequestMapping(table.tableName),
         },
+        passthroughBehavior: apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseTemplates: {
+              "application/json": getItemJSONResponseMapping(),
+            },
+          },
+        ],
       },
     });
 
@@ -128,23 +129,11 @@ export class ServerlessWindPortfolioStack extends cdk.Stack {
       action: "PutItem",
       options: {
         credentialsRole: credentialsRole,
-        integrationResponses: [{ statusCode: "200" }],
         requestTemplates: {
-          "application/json": `{
-              "Item": {
-                "id": {
-                  "S": "$method.request.path.id"
-                },
-                "name": {
-                  "S": "$input.path('$.name')"
-                },
-                "number_of_turbines": {
-                  "S": "$input.path('$.number_of_turbines')"
-                }
-              },
-              "TableName": "${table.tableName}"
-            }`,
+          "application/json": updateJSONRequestMapping(table.tableName),
         },
+        passthroughBehavior: apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
+        integrationResponses: [{ statusCode: "200" }],
       },
     });
 
@@ -156,7 +145,6 @@ export class ServerlessWindPortfolioStack extends cdk.Stack {
       methodResponses: [{ statusCode: "200" }],
     });
 
-    const farm = farms.addResource("{id}");
     farm.addMethod("GET", getIntegration, {
       methodResponses: [{ statusCode: "200" }],
     });
@@ -165,37 +153,3 @@ export class ServerlessWindPortfolioStack extends cdk.Stack {
     });
   }
 }
-
-// interface CreateDynamoIntegrationProps {
-//   action: string;
-//   role: iam.Role;
-//   requestTemplate: string;
-//   integrationResponseTemplate?: string;
-// }
-
-// function createDynamoIntegration(
-//   props: CreateDynamoIntegrationProps
-// ): apigateway.AwsIntegration {
-//   const integrationResponses = props.integrationResponseTemplate
-//     ? [
-//         {
-//           statusCode: "200",
-//           responseTemplates: {
-//             "application/json": props.integrationResponseTemplate,
-//           },
-//         },
-//       ]
-//     : [{ statusCode: "200" }];
-
-//   return new apigateway.AwsIntegration({
-//     service: "dynamodb",
-//     action: props.action,
-//     options: {
-//       credentialsRole: props.role,
-//       integrationResponses,
-//       requestTemplates: {
-//         "application/json": props.requestTemplate,
-//       },
-//     },
-//   });
-// }
