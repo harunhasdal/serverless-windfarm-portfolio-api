@@ -64,92 +64,101 @@ export class ServerlessWindPortfolioStack extends cdk.Stack {
     const farms = api.root.addResource("farms");
     const farm = farms.addResource("{id}");
 
-    const putIntegration = new apigateway.AwsIntegration({
-      service: "dynamodb",
-      action: "PutItem",
-      options: {
-        credentialsRole: credentialsRole,
-        requestTemplates: {
-          "application/json": postJSONRequestMapping(table.tableName),
-        },
-        passthroughBehavior: apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
-        integrationResponses: [
-          {
-            statusCode: "200",
-            responseTemplates: {
-              "application/json": postJSONResponseMapping(),
-            },
+    farms.addMethod(
+      "POST",
+      new apigateway.AwsIntegration({
+        service: "dynamodb",
+        action: "PutItem",
+        options: {
+          credentialsRole: credentialsRole,
+          requestTemplates: {
+            "application/json": postJSONRequestMapping(table.tableName),
           },
-        ],
-      },
-    });
-
-    const getCollectionIntegration = new apigateway.AwsIntegration({
-      service: "dynamodb",
-      action: "Scan",
-      options: {
-        credentialsRole: credentialsRole,
-        requestTemplates: {
-          "application/json": scanJSONRequestMapping(table.tableName),
-        },
-        passthroughBehavior: apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
-        integrationResponses: [
-          {
-            statusCode: "200",
-            responseTemplates: {
-              "application/json": scanJSONResponseMapping(),
+          passthroughBehavior: apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
+          integrationResponses: [
+            {
+              statusCode: "200",
+              responseTemplates: {
+                "application/json": postJSONResponseMapping(),
+              },
             },
-          },
-        ],
-      },
-    });
-
-    const getIntegration = new apigateway.AwsIntegration({
-      service: "dynamodb",
-      action: "GetItem",
-      options: {
-        credentialsRole: credentialsRole,
-        requestTemplates: {
-          "application/json": getItemJSONRequestMapping(table.tableName),
+          ],
         },
-        passthroughBehavior: apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
-        integrationResponses: [
-          {
-            statusCode: "200",
-            responseTemplates: {
-              "application/json": getItemJSONResponseMapping(),
+      }),
+      {
+        methodResponses: [{ statusCode: "200" }],
+      }
+    );
+
+    farms.addMethod(
+      "GET",
+      new apigateway.AwsIntegration({
+        service: "dynamodb",
+        action: "Scan",
+        options: {
+          credentialsRole: credentialsRole,
+          requestTemplates: {
+            "application/json": scanJSONRequestMapping(table.tableName),
+          },
+          passthroughBehavior: apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
+          integrationResponses: [
+            {
+              statusCode: "200",
+              responseTemplates: {
+                "application/json": scanJSONResponseMapping(),
+              },
             },
-          },
-        ],
-      },
-    });
-
-    const updateIntegration = new apigateway.AwsIntegration({
-      service: "dynamodb",
-      action: "PutItem",
-      options: {
-        credentialsRole: credentialsRole,
-        requestTemplates: {
-          "application/json": updateJSONRequestMapping(table.tableName),
+          ],
         },
-        passthroughBehavior: apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
-        integrationResponses: [{ statusCode: "200" }],
-      },
-    });
+      }),
+      {
+        methodResponses: [{ statusCode: "200" }],
+      }
+    );
 
-    farms.addMethod("POST", putIntegration, {
-      methodResponses: [{ statusCode: "200" }],
-    });
+    farm.addMethod(
+      "GET",
+      new apigateway.AwsIntegration({
+        service: "dynamodb",
+        action: "GetItem",
+        options: {
+          credentialsRole: credentialsRole,
+          requestTemplates: {
+            "application/json": getItemJSONRequestMapping(table.tableName),
+          },
+          passthroughBehavior: apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
+          integrationResponses: [
+            {
+              statusCode: "200",
+              responseTemplates: {
+                "application/json": getItemJSONResponseMapping(),
+              },
+            },
+          ],
+        },
+      }),
+      {
+        methodResponses: [{ statusCode: "200" }],
+      }
+    );
 
-    farms.addMethod("GET", getCollectionIntegration, {
-      methodResponses: [{ statusCode: "200" }],
-    });
-
-    farm.addMethod("GET", getIntegration, {
-      methodResponses: [{ statusCode: "200" }],
-    });
-    farm.addMethod("PUT", updateIntegration, {
-      methodResponses: [{ statusCode: "200" }],
-    });
+    farm.addMethod(
+      "PUT",
+      new apigateway.AwsIntegration({
+        service: "dynamodb",
+        action: "PutItem",
+        options: {
+          credentialsRole: credentialsRole,
+          requestTemplates: {
+            "application/json": updateJSONRequestMapping(table.tableName),
+          },
+          passthroughBehavior: apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
+          integrationResponses: [{ statusCode: "200" }],
+        },
+      }),
+      {
+        methodResponses: [{ statusCode: "200" }],
+      }
+    );
   }
 }
