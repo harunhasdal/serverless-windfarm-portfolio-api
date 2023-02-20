@@ -13,6 +13,9 @@ export const postJSONRequestMapping = (tableName: string): string => {
           },
           "number_of_turbines": {
             "S": "$input.path('$.number_of_turbines')"
+          },
+          "start_of_production": {
+            "N": "$input.path('$.start_of_production')"
           }
         },
         "TableName": "${tableName}"
@@ -27,6 +30,7 @@ export const scanJSONResponseMapping = (): string => {
                 "id": "$elem.id.S",
                 "name": "$elem.name.S",
                 "number_of_turbines": "$elem.number_of_turbines.S"
+                "start_of_production": $elem.start_of_production.N
             }#if($foreach.hasNext),#end
       #end
         ]
@@ -53,7 +57,8 @@ export const getItemJSONResponseMapping = (): string => {
     {
       "id": "$inputRoot.id.S",
       "name": "$inputRoot.name.S",
-      "number_of_turbines": "$inputRoot.number_of_turbines.S"
+      "number_of_turbines": "$inputRoot.number_of_turbines.S",
+      "start_of_production": $inputRoot.start_of_production.N
     }`;
 };
 
@@ -68,6 +73,9 @@ export const updateJSONRequestMapping = (tableName: string): string => {
           },
           "number_of_turbines": {
             "S": "$input.path('$.number_of_turbines')"
+          },
+          "start_of_production": {
+            "N": "$input.path('$.start_of_production')"
           }
         },
         "TableName": "${tableName}"
