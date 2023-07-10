@@ -46,7 +46,7 @@ export class ServerlessWindPortfolioStack extends cdk.Stack {
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
       },
-
+      cloudWatchRole: true,
       deployOptions: {
         tracingEnabled: true,
         accessLogDestination: new apigateway.LogGroupLogDestination(logGroup),
@@ -112,6 +112,7 @@ export class ServerlessWindPortfolioStack extends cdk.Stack {
         },
       }),
       {
+        // authorizationType: apigateway.AuthorizationType.IAM,
         methodResponses: [{ statusCode: "200" }],
       }
     );
